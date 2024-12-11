@@ -4,6 +4,7 @@
 
 module TREXIO.Internal.TH where
 
+import Control.Exception.Safe
 import Control.Monad
 import Data.Aeson hiding (Success, withArray)
 import Data.Bit.ThreadSafe (Bit)
@@ -14,7 +15,7 @@ import Data.Char
 import Data.Coerce
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Massiv.Array as Massiv hiding (Dim, forM, forM_, mapM, product, replicate, toList, zip)
+import Data.Massiv.Array as Massiv hiding (Dim, forM, forM_, mapM, product, replicate, toList, zip, throwM)
 import Data.Massiv.Array qualified as Massiv
 import Data.Massiv.Array.Manifest.Vector qualified as Massiv
 import Data.Massiv.Array.Unsafe (unsafeWithPtr)
@@ -23,11 +24,9 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Vector qualified as V
 import Foreign hiding (peekArray, withArray)
-import Foreign qualified as F
 import Foreign.C.ConstPtr
 import Foreign.C.String
 import Foreign.C.Types
-import Foreign.ForeignPtr.Unsafe
 import GHC.Generics (Generic)
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (Lift (..))
@@ -504,26 +503,21 @@ mkReadFns groupName dataName fieldType = case dims of
             nStrings <- $(mkSizeFn d1) trexio
             let maxStrLen = 256
 
-            -- Allocate nStrings buffers
-            strFPtrs :: [ForeignPtr CChar] <- forM [0 .. nStrings - 1] $ \_ ->
-              mallocForeignPtrArray maxStrLen
-            let strPtrs :: [Ptr CChar] = unsafeForeignPtrToPtr <$> strFPtrs
+            allocaArray nStrings $ \(superPtr :: Ptr (Ptr CChar)) ->
+              -- Allocate the buffers for the strings
+              bracket
+                (replicateM nStrings $ callocArray0 maxStrLen)
+                (traverse free)
+                $ \(strPtrs :: [Ptr CChar]) -> do
+                  -- Write the individual buffers to the super buffer
+                  forM_ (zip [0 ..] strPtrs) $ \(i, strPtr) ->
+                    pokeElemOff superPtr i strPtr
 
-            -- Allocate the vector storing the pointers to the buffers
-            F.withArray strPtrs $ \(ptrPtr :: Ptr (Ptr CChar)) -> do
-              -- Call C function
-              ec <- exitCodeH <$> $(varE . mkName $ mkCFnName Read groupName dataName) trexio ptrPtr (fromIntegral maxStrLen)
-              res <- case ec of
-                Success -> do
-                  cStrings <- F.peekArray nStrings ptrPtr
-                  strings <- traverse peekCString cStrings
-                  return . Massiv.fromList Seq . fmap T.pack $ strings
-                _ -> throwM ec
-
-              -- Clean up all foreign pointers explicitly
-              forM_ strFPtrs $ \fptr -> finalizeForeignPtr fptr
-
-              return res
+                  -- Call the C function
+                  ec <- exitCodeH <$> $(varE . mkName $ mkCFnName Read groupName dataName) trexio superPtr (fromIntegral maxStrLen)
+                  case ec of
+                    Success -> Massiv.fromList Seq . fmap T.pack <$> traverse peekCString strPtrs
+                    _ -> throwM ec
           |]
     | isBitField fieldType ->
         [e|
