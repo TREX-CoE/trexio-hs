@@ -10,10 +10,7 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs";
 
-    trexio = {
-      url = "github:TREX-CoE/trexio";
-      flake = false;
-    };
+    trexio.url = "github:TREX-CoE/trexio";
   };
 
   outputs =
@@ -24,16 +21,14 @@
       flake-utils,
     }:
     let
-      trexioOvl = import ./nix/overlay.nix {
-        trexioSrc = trexio;
-      };
+      trexioOvl = import ./nix/overlay.nix;
     in
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ trexioOvl ];
+          overlays = [ /*trexio.overlays.default*/ trexioOvl ];
         };
       in
       {
