@@ -82,7 +82,7 @@ getJsonSpec = withSystemTempFile "trexio.c" $ \tmpPath tmpHandle -> do
   trexioHeader <- liftIO $ BL.readFile trexioPath
   let jsonString =
         BLC.unlines
-          . L.tail
+          . L.drop 1
           . takeWhile (/= "*/")
           . dropWhile (/= "/* JSON configuration")
           . BLC.lines
