@@ -711,6 +711,20 @@ mkReadFns groupName dataName fieldType = case dims of
           |]
     | otherwise -> error $ "mkReadFns: unsupported field type for 3D data: " <> show fieldType
   [d1, d2, d3, d4]
+    | isFloatField fieldType ->
+        [e|
+          \trexio ->
+            liftIO $ do
+              sz1 <- $(mkSizeFn d1) trexio
+              sz2 <- $(mkSizeFn d2) trexio
+              sz3 <- $(mkSizeFn d3) trexio
+              sz4 <- $(mkSizeFn d4) trexio
+              allocaArray (sz1 * sz2 * sz3 * sz4) $ \buf -> do
+                ec <- exitCodeH <$> $(varE . mkName $ mkCFnName Read groupName dataName) trexio buf
+                case ec of
+                  Success -> peekArray (Sz4 sz1 sz2 sz3 sz4) (castPtr buf)
+                  _ -> throwM ec
+          |]
     | isSparseFloat fieldType ->
         [e|
           \trexio -> liftIO $ do
@@ -1034,6 +1048,16 @@ mkWriteFns scheme groupName dataName fieldType = case dims of
           |]
     | otherwise -> error $ "mkWriteFns: unsupported field type for 3D data: " <> show fieldType
   [d1, d2, d3, d4]
+    | isFloatField fieldType ->
+        [e|
+          \trexio arr -> liftIO . unsafeWithPtr arr $ \arrPtr -> do
+            let Sz4 sz1 sz2 sz3 sz4 = size arr
+            $(mkWriteSzFn scheme d1) trexio sz1
+            $(mkWriteSzFn scheme d2) trexio sz2
+            $(mkWriteSzFn scheme d3) trexio sz3
+            $(mkWriteSzFn scheme d4) trexio sz4
+            checkEC $ $(varE . mkName $ mkCFnName Write groupName dataName) trexio (castPtr arrPtr)
+          |]
     | isSparseFloat fieldType ->
         [e|
           \trexio cooArr -> liftIO $ do
