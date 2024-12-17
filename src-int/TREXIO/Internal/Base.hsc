@@ -200,12 +200,14 @@ hasBackend backend = toBool . hasBackend_ . fromIntegral . fromEnum $ backend
 
 --------------------------------------------------------------------------------
 
+-- | TREXIO file handle
 newtype Trexio = Trexio (Ptr Trexio)
 
+-- | File access mode for 'Trexio'.
 data FileMode
   = FileRead
   | FileWrite
-  | FileUnsafe
+  | FileUnsafe -- ^ Allows to delete and override data
   deriving (Eq, Show, Ord, Generic)
 
 modeC :: FileMode -> CChar

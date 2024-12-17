@@ -72,6 +72,8 @@ module TREXIO (
     GroupName,
     Group (..),
     Typ (..),
+    Length (..),
+    DimLength (..),
     DataName,
 
     -- * High Level Interface
@@ -88,7 +90,7 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (lift)
 import TREXIO.HighLevel
 import TREXIO.Internal.Base
-import TREXIO.Internal.TH (DataName, Group (..), GroupName, TrexioScheme (..), Typ (..))
+import TREXIO.Internal.TH (DataName, Group (..), GroupName, TrexioScheme (..), Typ (..), Length (..), DimLength (..))
 import TREXIO.LowLevel.Scheme (scheme)
 
 -- | Work safely with a TREXIO file handle. Prefer over 'open' and 'close'.

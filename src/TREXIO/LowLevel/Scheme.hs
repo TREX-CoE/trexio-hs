@@ -16,6 +16,8 @@ import Language.Haskell.TH
 import TREXIO.Internal.TH
 import Language.Haskell.TH.Syntax (lift)
 
+-- | The JSON specification of the code generator, that constructs the C-API and
+-- that this package binds to.
 scheme :: TrexioScheme
 scheme = $(do
     trexio <- runIO getJsonSpec
