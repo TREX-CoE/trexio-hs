@@ -95,7 +95,6 @@ common extensions
         OverloadedStrings,
         OverloadedRecordDot,
         RecordWildCards,
-        OverloadedRecordUpdate,
         DuplicateRecordFields,
         LambdaCase
 
