@@ -10,26 +10,33 @@ import Data.Aeson hiding (Success, withArray)
 import Data.Bit.ThreadSafe (Bit)
 import Data.Bit.ThreadSafe qualified as BV
 import Data.ByteString qualified as BS
+import Data.ByteString.Lazy qualified as BL
+import Data.ByteString.Lazy.Char8 qualified as BLC
 import Data.ByteString.Unsafe qualified as BS
 import Data.Char
 import Data.Coerce
+import Data.List qualified as L
 import Data.Map (Map)
 import Data.Map qualified as Map
-import Data.Massiv.Array as Massiv hiding (Dim, forM, forM_, mapM, product, replicate, toList, zip, throwM)
+import Data.Massiv.Array as Massiv hiding (Dim, dropWhile, forM, forM_, mapM, product, replicate, takeWhile, throwM, toList, zip)
 import Data.Massiv.Array qualified as Massiv
 import Data.Massiv.Array.Manifest.Vector qualified as Massiv
 import Data.Massiv.Array.Unsafe (unsafeWithPtr)
 import Data.Maybe
 import Data.Text (Text)
 import Data.Text qualified as T
+import Data.Text.IO qualified as T
 import Data.Vector qualified as V
-import Foreign hiding (peekArray, withArray)
+import Foreign hiding (peekArray, void, withArray)
 import Foreign.C.ConstPtr
 import Foreign.C.String
 import Foreign.C.Types
 import GHC.Generics (Generic)
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (Lift (..))
+import System.IO
+import System.IO.Temp
+import System.Process.Typed
 import TREXIO.CooArray
 import TREXIO.Internal.Base
 import TREXIO.Internal.Marshaller
@@ -38,6 +45,51 @@ import Text.Read (readMaybe)
 
 tshow :: (Show a) => a -> Text
 tshow = T.pack . show
+
+--------------------------------------------------------------------------------
+
+{- | Attempts to obtain the JSON specification from the trexio.h header. This is
+a little bit arcane process:
+
+1. Write a temporary file @trexio.c@ that merely includes the header @#include <trexio.h>@
+2. Run the C preprocessor on it using @gcc -E trexio.c@. Comments will include
+   the included header paths
+3. Parse the output to find the header paths
+4. From the extracted header path, get the JSON specification
+-}
+getJsonSpec :: (MonadIO m, MonadMask m) => m TrexioScheme
+getJsonSpec = withSystemTempFile "trexio.c" $ \tmpPath tmpHandle -> do
+  -- Write the temporary file
+  liftIO $ do
+    T.hPutStrLn tmpHandle "#include <trexio.h>"
+    hFlush tmpHandle
+
+  -- Run the C preprocessor
+  (stdo, _) <- readProcess_ . shell $ "gcc -E " <> tmpPath
+
+  -- Filter for trexio.h header paths
+  let trexioLines =
+        filter ("/trexio.h" `BL.isSuffixOf`)
+          . fmap (BLC.filter (/= '"') . BLC.dropWhileEnd (/= '"') . BLC.dropWhile (/= '"'))
+          . filter ("#" `BL.isPrefixOf`)
+          . BLC.lines
+          $ stdo
+  trexioPath <- case trexioLines of
+    t : _ -> liftIO . BS.toFilePath . BS.toStrict $ t
+    _ -> throwString "Could not find trexio.h header path"
+
+  -- Get the JSON specification from the header
+  trexioHeader <- liftIO $ BL.readFile trexioPath
+  let jsonString =
+        BLC.unlines
+          . L.drop 1
+          . takeWhile (/= "*/")
+          . dropWhile (/= "/* JSON configuration")
+          . BLC.lines
+          $ trexioHeader
+  case eitherDecode jsonString of
+    Right trexio -> return trexio
+    Left err -> throwString $ "Could not parse JSON specification: " <> err
 
 --------------------------------------------------------------------------------
 
@@ -659,6 +711,20 @@ mkReadFns groupName dataName fieldType = case dims of
           |]
     | otherwise -> error $ "mkReadFns: unsupported field type for 3D data: " <> show fieldType
   [d1, d2, d3, d4]
+    | isFloatField fieldType ->
+        [e|
+          \trexio ->
+            liftIO $ do
+              sz1 <- $(mkSizeFn d1) trexio
+              sz2 <- $(mkSizeFn d2) trexio
+              sz3 <- $(mkSizeFn d3) trexio
+              sz4 <- $(mkSizeFn d4) trexio
+              allocaArray (sz1 * sz2 * sz3 * sz4) $ \buf -> do
+                ec <- exitCodeH <$> $(varE . mkName $ mkCFnName Read groupName dataName) trexio buf
+                case ec of
+                  Success -> peekArray (Sz4 sz1 sz2 sz3 sz4) (castPtr buf)
+                  _ -> throwM ec
+          |]
     | isSparseFloat fieldType ->
         [e|
           \trexio -> liftIO $ do
@@ -982,6 +1048,16 @@ mkWriteFns scheme groupName dataName fieldType = case dims of
           |]
     | otherwise -> error $ "mkWriteFns: unsupported field type for 3D data: " <> show fieldType
   [d1, d2, d3, d4]
+    | isFloatField fieldType ->
+        [e|
+          \trexio arr -> liftIO . unsafeWithPtr arr $ \arrPtr -> do
+            let Sz4 sz1 sz2 sz3 sz4 = size arr
+            $(mkWriteSzFn scheme d1) trexio sz1
+            $(mkWriteSzFn scheme d2) trexio sz2
+            $(mkWriteSzFn scheme d3) trexio sz3
+            $(mkWriteSzFn scheme d4) trexio sz4
+            checkEC $ $(varE . mkName $ mkCFnName Write groupName dataName) trexio (castPtr arrPtr)
+          |]
     | isSparseFloat fieldType ->
         [e|
           \trexio cooArr -> liftIO $ do

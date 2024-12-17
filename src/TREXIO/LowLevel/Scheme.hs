@@ -12,13 +12,12 @@ Portability: POSIX
 -}
 module TREXIO.LowLevel.Scheme where
 
-import Data.Aeson
 import Language.Haskell.TH
 import TREXIO.Internal.TH
 import Language.Haskell.TH.Syntax (lift)
 
 scheme :: TrexioScheme
 scheme = $(do
-    Just trexio <- runIO $ decodeFileStrict @TrexioScheme "./data/trexio.json"
+    trexio <- runIO getJsonSpec
     lift trexio
   )

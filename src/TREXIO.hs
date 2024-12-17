@@ -31,9 +31,6 @@ coord = [    # xyz coordinates in atomic units
     [0. , 2.70519714, 1.85136466],
     [0. , -2.70519714, 1.85136466]
 ]
-# The Python API calls can raise `trexio.Error`
-# exceptions to be handled via try/except clauses
-# in the user application
 with trexio.File("water.trexio", 'w',
                  back_end=trexio.TREXIO_HDF5) as f:
     trexio.write_nucleus_num(f, len(coord))
@@ -43,6 +40,21 @@ with trexio.File("water.trexio", 'w',
 This high-level API abstracts over this and automatically writes the size of the array to the corresponding field.
 Safety checks are employed to ensure, should the size already exist, that it is consistent with the array size and other arrays utilising the same size field.
 Should this safety check be violated, an the 'AttrAlreadyExists' exception will be thrown, as the corresponding size field already exists and is inconsistent with the new size.
+Thus, the Haskell equivalent to this is:
+
+@
+import TREXIO
+import Data.Massiv.Array as Massiv
+
+coord <- Massiv.fromListsM Par
+    [ [0. , 0., -0.24962655]
+    , [0. , 2.70519714, 1.85136466]
+    , [0. , -2.70519714, 1.85136466]
+    ]
+withTrexio "water.trexio" FileWrite Hdf5 $ \\trexio ->
+    writeNucleusCoord trexio coord
+@
+
 -}
 module TREXIO (
     -- * Basic Operations
