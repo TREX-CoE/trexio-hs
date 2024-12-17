@@ -1,3 +1,5 @@
+name: Nix
+
 on: 
   - pull_request
   - push
