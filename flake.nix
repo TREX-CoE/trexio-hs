@@ -50,11 +50,9 @@
         formatter = pkgs.nixfmt-rfc-style;
 
         checks = self.packages."${system}" // {
-          # ghc92 = pkgs.haskell.packages.ghc92.trexio-hs;
-          # ghc94 = pkgs.haskell.packages.ghc94.trexio-hs;
           ghc96 = pkgs.haskell.packages.ghc96.trexio-hs;
           ghc98 = pkgs.haskell.packages.ghc98.trexio-hs;
-          # ghc910 = pkgs.haskell.packages.ghc910.trexio-hs;
+          ghc910 = pkgs.haskell.packages.ghc910.trexio-hs;
         };
       }
     )
