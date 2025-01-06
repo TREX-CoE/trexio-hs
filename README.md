@@ -15,7 +15,7 @@ If you're using Nix, you can include these bindings as an overlay, e.g. such a `
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
-    trexio-hs.url = "github:sheepforce/trexio-hs";
+    trexio-hs.url = "github:TREX-CoE/trexio-hs";
   };
 
   outputs = 
@@ -32,7 +32,7 @@ If you're using Nix, you can include these bindings as an overlay, e.g. such a `
 
 ```
 
-Of course, you can also simply build the project via `nix build github:sheepforce/trexio-hs`.
+Of course, you can also simply build the project via `nix build github:TREX-CoE/trexio-hs`.
 
 ### Cabal
 This package is on Hackage: <https://hackage.haskell.org/package/trexio-hs>
