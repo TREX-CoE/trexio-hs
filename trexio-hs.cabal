@@ -16,7 +16,7 @@ maintainer:         phillip.seeber@uni-jena.de
 category:           Data
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
-tested-with:        GHC == {9.6, 9.8, 9.10, 9.12}
+tested-with:        GHC == {9.6, 9.8, 9.10}
 description:
     This package provides low- and high-level Haskell bindings for [TREXIO, a portable file format for storing wave function data](https://trex-coe.github.io/trexio/).
     The vast majority of the bindings in this package is generated via TemplateHaskell from the TREXIO JSON specification, that then defines the C-API.
