@@ -28,7 +28,7 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ /*trexio.overlays.default*/ trexioOvl ];
+          overlays = [ trexioOvl trexio.overlays.default ];
         };
       in
       {
