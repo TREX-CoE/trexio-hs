@@ -7,7 +7,7 @@ name:               trexio-hs
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:            0.1.0
+version:            0.1.1
 synopsis: Bindings to the TREXIO library for wave function data
 homepage:           https://github.com/TREX-CoE/trexio-hs
 license:            BSD-3-Clause

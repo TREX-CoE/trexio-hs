@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install -y libhdf5-dev
-          wget https://github.com/TREX-CoE/trexio/releases/download/v2.5.0/trexio-2.5.0.tar.gz
+          wget https://github.com/TREX-CoE/trexio/releases/download/v${{ matrix.trexio }}/trexio-${{ matrix.trexio }}.tar.gz
           tar -xvf trexio-${{ matrix.trexio }}.tar.gz
           cd trexio-${{ matrix.trexio }}
           ./configure
