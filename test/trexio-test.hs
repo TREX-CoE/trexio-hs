@@ -1,5 +1,6 @@
 import Control.Exception.Safe
 import Control.Monad
+import Data.Bit.ThreadSafe (Bit)
 import Data.Massiv.Array as Massiv hiding (Size, elem, forM, forM_, mapM, mapM_, take, zip, zipWith)
 import Data.Maybe (catMaybes, fromJust)
 import Data.Set qualified as Set
@@ -26,11 +27,11 @@ tests =
             "0D"
             [ testGroup "Integers" . appFn $
                 [ ("nucleus.num", genDim, deleteNucleus, hasNucleusNum, readNucleusNum, writeNucleusNum)
-                , ("grid.max_ang_num", genInt, deleteGrid, hasGridMaxAngNum, readGridMaxAngNum, writeGridMaxAngNum)
+                , ("grid.max_ang_num", genPosInt, deleteGrid, hasGridMaxAngNum, readGridMaxAngNum, writeGridMaxAngNum)
                 , ("state.id", genIndex, deleteState, hasStateId, readStateId, writeStateId)
                 ]
             , testGroup "Floats" . appFn $
-                [ ("nucleus.repulsion", genFloat, deleteNucleus, hasNucleusRepulsion, readNucleusRepulsion, writeNucleusRepulsion)
+                [ ("nucleus.repulsion", genPosFloat, deleteNucleus, hasNucleusRepulsion, readNucleusRepulsion, writeNucleusRepulsion)
                 ]
             , testGroup "Strings" . appFn $
                 [ ("metadata.description", genIdentifier, deleteMetadata, hasMetadataDescription, readMetadataDescription, writeMetadataDescription)
@@ -57,12 +58,15 @@ tests =
                     ingoreExcp [AttrMissing] (readDeterminantList trexio)
 
                     let detList =
-                            Massiv.fromLists'
+                            Massiv.fromLists' @U @Ix2 @(Bit, Bit)
                                 Seq
                                 [ [(1, 1), (1, 0), (0, 0)]
                                 , [(1, 0), (1, 1), (0, 0)]
                                 ]
-                        detCoeffs = Massiv.fromList Seq [1.0, 2.0]
+                        detCoeffs = Massiv.fromList @S @Double Seq [1.0, 2.0]
+
+                    writeElectronUpNum trexio 2
+                    writeElectronDnNum trexio 1
 
                     writeDeterminantList trexio detList
 
@@ -181,6 +185,9 @@ data DimDep
 genInt :: Gen Int
 genInt = Gen.integral (Range.linearFrom 0 (-1_000_000) 1_000_000)
 
+genPosInt :: Gen Int
+genPosInt = Gen.integral (Range.linearFrom 0 0 100)
+
 -- | Generate a @dim@ value, which is a positive integer
 genDim :: Gen Int
 genDim = Gen.integral (Range.linear 1 100)
@@ -191,6 +198,9 @@ genIndex = Gen.integral (Range.linear 0 1000)
 
 genFloat :: Gen Double
 genFloat = Gen.realFloat (Range.linearFrac (-1_000_000) 1_000_000)
+
+genPosFloat :: Gen Double
+genPosFloat = Gen.realFloat (Range.linearFrac 0 1_000_000)
 
 -- | Generate a identifier, that is a single word without spaces or stuff
 genIdentifier :: Gen Text
