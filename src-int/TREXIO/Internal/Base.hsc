@@ -234,22 +234,16 @@ foreign import capi "trexio.h trexio_close" close_ :: Trexio -> IO ExitCodeC
 close :: (MonadIO m, MonadThrow m) => Trexio -> m ()
 close trexio = checkEC $ close_ trexio
 
-foreign import capi "trexio.h trexio_get_int64_num" intsPerDet_ :: 
-  Trexio ->
-  Ptr CInt ->
-  IO ExitCodeC
-
--- | Get the number of 'Int64's required to store a single determinant. This is a
--- convenience function that avoids manual calculation via the size if Int64 and
--- the number of MOs.
-intsPerDet :: (MonadIO m, MonadThrow m) => Trexio -> m Int
-intsPerDet trexio = liftIO . alloca $ \nPtr -> do
-  checkEC $ intsPerDet_ trexio nPtr
-  fromIntegral <$> peek nPtr
-
 foreign import capi "trexio.h trexio_mark_safety" markSafety_ :: Trexio -> Int32 -> IO ExitCodeC
 
 -- | After a file has been opened unsafely, it can be marked as safe by this function 
 -- forcefully. You are responsible for internal incosistencies that may arise from this.
 markSafety :: (MonadIO m, MonadThrow m) => Trexio -> m ()
 markSafety trexio = checkEC $ markSafety_ trexio 0
+
+--------------------------------------------------------------------------------
+
+-- | Bit field type for storing determinant information.
+newtype BitFieldT = BitFieldT Int64
+  deriving (Eq, Ord, Show)
+  deriving Storable via (Int64)

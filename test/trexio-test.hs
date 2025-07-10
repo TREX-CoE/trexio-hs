@@ -1,9 +1,13 @@
+import Control.Concurrent (threadDelay)
 import Control.Exception.Safe
 import Control.Monad
+import Data.Bit.ThreadSafe (Bit)
 import Data.Massiv.Array as Massiv hiding (Size, elem, forM, forM_, mapM, mapM_, take, zip, zipWith)
+import Data.Massiv.Array qualified as Massiv
 import Data.Maybe (catMaybes, fromJust)
 import Data.Set qualified as Set
 import Data.Text (Text)
+import Debug.Trace
 import Hedgehog (Gen, MonadGen, Size, forAll, property, (===))
 import Hedgehog.Gen qualified as Gen
 import Hedgehog.Range qualified as Range
@@ -26,11 +30,11 @@ tests =
             "0D"
             [ testGroup "Integers" . appFn $
                 [ ("nucleus.num", genDim, deleteNucleus, hasNucleusNum, readNucleusNum, writeNucleusNum)
-                , ("grid.max_ang_num", genInt, deleteGrid, hasGridMaxAngNum, readGridMaxAngNum, writeGridMaxAngNum)
+                , ("grid.max_ang_num", genPosInt, deleteGrid, hasGridMaxAngNum, readGridMaxAngNum, writeGridMaxAngNum)
                 , ("state.id", genIndex, deleteState, hasStateId, readStateId, writeStateId)
                 ]
             , testGroup "Floats" . appFn $
-                [ ("nucleus.repulsion", genFloat, deleteNucleus, hasNucleusRepulsion, readNucleusRepulsion, writeNucleusRepulsion)
+                [ ("nucleus.repulsion", genPosFloat, deleteNucleus, hasNucleusRepulsion, readNucleusRepulsion, writeNucleusRepulsion)
                 ]
             , testGroup "Strings" . appFn $
                 [ ("metadata.description", genIdentifier, deleteMetadata, hasMetadataDescription, readMetadataDescription, writeMetadataDescription)
@@ -47,35 +51,52 @@ tests =
             , testGroup "Strings" . appFn $
                 [ ("metadata.author", genVector genIdentifier, deleteMetadata, hasMetadataAuthor, readMetadataAuthor, writeMetadataAuthor)
                 ]
-            , testCase "Determinant IO" . withSystemTempFile "trexio.dat" $ \fp _ ->
-                withTrexio fp FileWrite Hdf5 $ \trexio -> do
-                    writeMoNum trexio 3
+            , testProperty "Determinant IO" . property $ do
+                -- Generate occupation numbers
+                nMo <- forAll $ Gen.int (Range.linear 1 1000)
+                nUp <- forAll $ Gen.int (Range.linear 2 (nMo - 1))
+                nDn <- forAll $ Gen.int (Range.linear 2 (nMo - 1))
 
-                    has1 <- hasDeterminantList trexio
-                    has1 @?= False
+                -- Generate determinants
+                dets <- forAll $ genDet nMo (nUp, nDn)
+                let Sz2 nDets _ = Massiv.size dets
 
-                    ingoreExcp [AttrMissing] (readDeterminantList trexio)
+                -- Generate coefficients
+                let
+                coeffs <- forAll . fmap (Massiv.fromList Par) $ Gen.list (Range.singleton nDets) (Gen.double $ Range.linearFrac (-10) 10)
 
-                    let detList =
-                            Massiv.fromLists'
-                                Seq
-                                [ [(1, 1), (1, 0), (0, 0)]
-                                , [(1, 0), (1, 1), (0, 0)]
-                                ]
-                        detCoeffs = Massiv.fromList Seq [1.0, 2.0]
+                liftIO $ withSystemTempFile "trexio.dat" $ \fp _ ->
+                    withTrexio fp FileWrite Hdf5 $ \trexio -> do
+                        -- Write MO numbers and electron occupation numbers to the file
+                        writeMoNum trexio nMo
+                        writeElectronUpNum trexio nUp
+                        writeElectronDnNum trexio nDn
 
-                    writeDeterminantList trexio detList
+                        nMo' <- readMoNum trexio
+                        nUp' <- readElectronUpNum trexio
+                        nDn' <- readElectronDnNum trexio
 
-                    has2 <- hasDeterminantList trexio
-                    has2 @?= True
+                        -- Check
+                        nMo @?= nMo'
+                        nUp @?= nUp'
+                        nDn @?= nDn'
 
-                    detList' <- readDeterminantList trexio
-                    detList' @?= detList
+                        -- Write determinants
+                        writeDeterminantList trexio dets
 
-                    writeDeterminantCoefficient trexio detCoeffs
+                        -- Read back determinants
+                        readDets <- readDeterminantList trexio
 
-                    detCoeffs' <- readDeterminantCoefficient trexio
-                    detCoeffs' @?= detCoeffs
+                        -- Check for equality
+                        dets @?= readDets
+
+                        -- Write coefficients
+                        writeDeterminantCoefficient trexio coeffs
+
+                        -- Read back coefficients
+                        coeffs' <- readDeterminantCoefficient trexio
+
+                        coeffs @?= coeffs'
             ]
         , testGroup
             "2D"
@@ -181,6 +202,9 @@ data DimDep
 genInt :: Gen Int
 genInt = Gen.integral (Range.linearFrom 0 (-1_000_000) 1_000_000)
 
+genPosInt :: Gen Int
+genPosInt = Gen.integral (Range.linearFrom 0 0 100)
+
 -- | Generate a @dim@ value, which is a positive integer
 genDim :: Gen Int
 genDim = Gen.integral (Range.linear 1 100)
@@ -189,8 +213,14 @@ genDim = Gen.integral (Range.linear 1 100)
 genIndex :: Gen Int
 genIndex = Gen.integral (Range.linear 0 1000)
 
+genMoIndex :: Gen Word
+genMoIndex = Gen.word (Range.linear 0 300)
+
 genFloat :: Gen Double
 genFloat = Gen.realFloat (Range.linearFrac (-1_000_000) 1_000_000)
+
+genPosFloat :: Gen Double
+genPosFloat = Gen.realFloat (Range.linearFrac 0 1_000_000)
 
 -- | Generate a identifier, that is a single word without spaces or stuff
 genIdentifier :: Gen Text
@@ -444,3 +474,34 @@ scaleSparse = Gen.scale sz2zs
   where
     sz2zs :: Size -> Size
     sz2zs x = round $ fromIntegral x * (0.25 :: Double)
+
+-- | Generate multiple determinants valid for given system
+genDet ::
+    -- | Number of MOs in the system
+    Int ->
+    -- | Number of Up and Down electrons
+    (Int, Int) ->
+    -- | List of determinants
+    Gen (Matrix U (Bit, Bit))
+genDet nMo (nUp, nDn) = do
+    detsL <- Gen.set (Range.linear 1 100) detGen
+    dets <- case Massiv.stackOuterSlicesM . Set.toList $ detsL of
+        Nothing -> error "Failed to stack slices"
+        Just dets' -> return dets'
+    return . compute $ dets
+  where
+    occGen :: (MonadGen m) => Int -> m (Set.Set Int)
+    occGen nOcc = Gen.set (Range.singleton nOcc) (Gen.int (Range.linear 0 (nMo - 1)))
+
+    detGen :: (MonadGen m) => m (Massiv.Vector U (Bit, Bit))
+    detGen = do
+        -- Generate indices of occupied orbitals
+        occUp <- occGen nUp
+        occDn <- occGen nDn
+
+        -- Generate a single determinant
+        let detUp = makeArray @U Par (Sz nMo) $ \i -> if i `Set.member` occUp then 1 else 0
+            detDn = makeArray @U Par (Sz nMo) $ \i -> if i `Set.member` occDn then 1 else 0
+            det = Massiv.zip detUp detDn
+
+        return . compute $ det

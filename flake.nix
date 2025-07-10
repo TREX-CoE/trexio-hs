@@ -28,7 +28,7 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ /*trexio.overlays.default*/ trexioOvl ];
+          overlays = [ trexioOvl trexio.overlays.default ];
         };
       in
       {
@@ -38,6 +38,7 @@
           withHoogle = true;
           packages = p: [ p.trexio-hs ];
           buildInputs = with pkgs; [
+            cabal-install
             haskell-language-server
             haskellPackages.fourmolu
             haskellPackages.haskell-ci
@@ -53,6 +54,7 @@
           ghc96 = pkgs.haskell.packages.ghc96.trexio-hs;
           ghc98 = pkgs.haskell.packages.ghc98.trexio-hs;
           ghc910 = pkgs.haskell.packages.ghc910.trexio-hs;
+          ghc912 = pkgs.haskell.packages.ghc912.trexio-hs;
         };
       }
     )

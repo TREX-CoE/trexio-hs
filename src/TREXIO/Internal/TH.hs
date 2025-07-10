@@ -28,6 +28,7 @@ import Data.Text qualified as T
 import Data.Text.IO qualified as T
 import Data.Vector qualified as V
 import Foreign hiding (peekArray, void, withArray)
+import Foreign qualified as F
 import Foreign.C.ConstPtr
 import Foreign.C.String
 import Foreign.C.Types
@@ -946,31 +947,29 @@ mkWriteFns scheme groupName dataName fieldType = case dims of
             let Sz2 nDets _nMos = size dets
             $(mkWriteSzFn scheme d1) trexio nDets
 
-            allocaArray (nDets * nInt64PerDet * 2) $ \detBuf -> do
+            callocaArray (nDets * nInt64PerDet * 2) $ \(detBuf :: Ptr Int64) -> do
               -- Write each determinant to the buffer
               forM_ [0 .. nDets - 1] $ \i -> do
+                -- Get a single determinant (up and down spin components) and
+                -- convert to a Storable Vector of Word8
                 let det = dets !> i
-                    detToByteString bv accFn =
-                      BV.cloneToByteString
-                        . Massiv.toVector
-                        . compute @U
-                        . Massiv.map accFn
-                        $ bv
-                    up = detToByteString det fst
-                    down = detToByteString det snd
-                    nBytes = BS.length up
                     upPtr = detBuf `plusPtr` (i * nInt64PerDet * 2 * sizeOf (undefined :: Int64))
-                    downPtr = upPtr `plusPtr` (nInt64PerDet * sizeOf (undefined :: Int64))
+                    dnPtr = upPtr `plusPtr` (nInt64PerDet * sizeOf (undefined :: Int64))
 
-                -- Up spin
-                BS.unsafeUseAsCString up $ \charPtr -> do
-                  copyBytes (castPtr upPtr) charPtr nBytes
+                let toOrbList tix = ifoldlS (\acc idx b -> if b == 1 then idx : acc else acc) mempty (Massiv.map tix det)
+                    orbUp = toOrbList fst
+                    orbDn = toOrbList snd
+                    nOccUp = length orbUp
+                    nOccDn = length orbDn
 
-                -- Down spin
-                BS.unsafeUseAsCString down $ \charPtr -> do
-                  copyBytes (castPtr downPtr) charPtr nBytes
+                -- Write the Bitfields to corresponding parts of the determinant buffer
+                F.withArray (fromIntegral <$> orbUp) $ \upListPtr -> do
+                  trexio_to_bitfield_list (ConstPtr upListPtr) (fromIntegral nOccUp) (ConstPtr upPtr) (fromIntegral nInt64PerDet)
 
-              -- Call the C funciton with the buffer
+                F.withArray (fromIntegral <$> orbDn) $ \dnListPtr -> do
+                  trexio_to_bitfield_list (ConstPtr dnListPtr) (fromIntegral nOccDn) (ConstPtr dnPtr) (fromIntegral nInt64PerDet)
+
+              -- Call the C function with the buffer
               checkEC $
                 $(varE . mkName $ mkCFnName Write groupName dataName)
                   trexio

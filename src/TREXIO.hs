@@ -78,7 +78,6 @@ module TREXIO (
 
     -- * High Level Interface
     scheme,
-    intsPerDet,
     withTrexio,
     module TREXIO.HighLevel,
 ) where
