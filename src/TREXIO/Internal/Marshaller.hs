@@ -1,5 +1,6 @@
 module TREXIO.Internal.Marshaller where
 
+import Control.Exception
 import Data.Massiv.Array as Massiv hiding (withMArray)
 import Data.Massiv.Array.Unsafe
 import Data.Maybe (fromJust)
@@ -22,8 +23,9 @@ withArray v f = do
   mArr <- thaw v
   withMArray mArr f
 
--- | Get an 'MArray' from C memory. Haskell and C side use the same memory reference.
--- Be careful with this function. When the undelying pointer vanishes, the array is nonsense
+{- | Get an 'MArray' from C memory. Haskell and C side use the same memory reference.
+Be careful with this function. When the undelying pointer vanishes, the array is nonsense
+-}
 unsafeToMArray :: (Index ix, Storable a) => Sz ix -> Ptr a -> IO (MArray s S ix a)
 unsafeToMArray sz ptr = do
   fPtr <- newForeignPtr_ ptr
@@ -174,3 +176,10 @@ castCoords8D ixVec =
       , fromIntegral t
       , fromIntegral s
       ]
+
+-- | Like 'callocArray' but safe with bracket pattern
+callocaArray :: (Storable a) => Int -> (Ptr a -> IO b) -> IO b
+callocaArray nEl =
+  bracket
+    (callocArray nEl)
+    free
