@@ -16,9 +16,11 @@ Consequently, they are unsafe and require manual memory management.
 -}
 module TREXIO.LowLevel where
 
+import Data.Int
 import Data.Map qualified as Map
 import Foreign.C.ConstPtr
 import Foreign.C.Types
+import Foreign.Ptr
 import TREXIO.Internal.Base
 import TREXIO.Internal.TH
 import TREXIO.LowLevel.Scheme
@@ -30,3 +32,23 @@ $( do
     -- Import all C functions for all fields and operations
     concat <$> traverse (uncurry mkCBindings) groups
  )
+
+-- | 'Int64's required per determinant
+foreign import capi "trexio.h trexio_get_int64_num"
+    trexio_get_int64_num ::
+        Trexio ->
+        Ptr CInt ->
+        IO ExitCodeC
+
+-- | Take a list of occupied orbital indices and create a bitfield from it
+foreign import capi "trexio.h trexio_to_bitfield_list"
+    trexio_to_bitfield_list ::
+        -- | @orb_list@
+        ConstPtr Int32 ->
+        -- | @occupied_num@
+        Int32 ->
+        -- | Preallocated, zeroed bit array representing a determinant
+        ConstPtr Int64 ->
+        -- | Number of Int64 required per determinant as obtained by 'trexio_get_int64_num'
+        Int32 ->
+        IO ExitCodeC

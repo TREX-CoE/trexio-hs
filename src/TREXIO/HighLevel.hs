@@ -18,6 +18,9 @@ import Data.Map qualified as Map
 import Data.Massiv.Array as Massiv hiding (Dim, forM)
 import Foreign.C.ConstPtr
 import Foreign.C.Types
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
+import Foreign.Storable
 import Language.Haskell.TH
 import TREXIO.Internal.Base
 import TREXIO.Internal.TH
@@ -38,3 +41,12 @@ $( do
             return $ hasBind <> readBind <> writeBind
         return $ deleteBind <> fieldBinds
  )
+
+{- | Get the number of 'Int64's required to store a single determinant. This is a
+convenience function that avoids manual calculation via the size if Int64 and
+the number of MOs.
+-}
+intsPerDet :: (MonadIO m, MonadThrow m) => Trexio -> m Int
+intsPerDet trexio = liftIO . alloca $ \nPtr -> do
+    checkEC $ trexio_get_int64_num trexio nPtr
+    fromIntegral <$> peek nPtr
