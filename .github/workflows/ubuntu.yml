@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         ghc: [ "9.6", "9.8", "9.10", "9.12" ]
-        trexio: [ "2.5.0" ]
+        trexio: [ "2.5.0", "2.6.0" ]
     name: GHC ${{ matrix.ghc }}, Trexio ${{ matrix.trexio }}
     steps:
       - name: Checkout

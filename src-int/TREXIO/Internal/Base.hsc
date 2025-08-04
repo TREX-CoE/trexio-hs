@@ -54,6 +54,18 @@ data ExitCode
   | InvalidState
   | VersionParsingIssue
   | PhaseChange
+  #if TREXIO_VERSION_MAJOR >= 2
+  #if TREXIO_VERSION_MINOR >= 6
+  | InvalidMoIndex
+  | InvalidArg9
+  | InvalidArg10
+  | InvalidArg11
+  | InvalidArg12
+  | InvalidArg13
+  | InvalidArg14
+  | CorruptionAttempt
+  #endif
+  #endif
   deriving (Show, Eq, Ord, Generic)
 
 instance Enum ExitCode where
@@ -96,7 +108,18 @@ instance Enum ExitCode where
   fromEnum InvalidState = #const TREXIO_INVALID_STATE
   fromEnum VersionParsingIssue = #const TREXIO_VERSION_PARSING_ISSUE
   fromEnum PhaseChange = #const TREXIO_PHASE_CHANGE
-
+  #if TREXIO_VERSION_MAJOR >= 2
+  #if TREXIO_VERSION_MINOR >= 6
+  fromEnum InvalidMoIndex = #const TREXIO_INVALID_MO_INDEX
+  fromEnum InvalidArg9 = #const TREXIO_INVALID_ARG_9
+  fromEnum InvalidArg10 = #const TREXIO_INVALID_ARG_10
+  fromEnum InvalidArg11 = #const TREXIO_INVALID_ARG_11
+  fromEnum InvalidArg12 = #const TREXIO_INVALID_ARG_12
+  fromEnum InvalidArg13 = #const TREXIO_INVALID_ARG_13
+  fromEnum InvalidArg14 = #const TREXIO_INVALID_ARG_14
+  fromEnum CorruptionAttempt = #const TREXIO_CORRUPTION_ATTEMPT
+  #endif
+  #endif
   toEnum (#const TREXIO_FAILURE) = Failure
   toEnum (#const TREXIO_SUCCESS) = Success
   toEnum (#const TREXIO_INVALID_ARG_1) = InvalidArg1
@@ -136,7 +159,20 @@ instance Enum ExitCode where
   toEnum (#const TREXIO_INVALID_STATE) = InvalidState
   toEnum (#const TREXIO_VERSION_PARSING_ISSUE) = VersionParsingIssue
   toEnum (#const TREXIO_PHASE_CHANGE) = PhaseChange
+  #if TREXIO_VERSION_MAJOR >= 2
+  #if TREXIO_VERSION_MINOR >= 6
+  toEnum (#const TREXIO_INVALID_MO_INDEX) = InvalidMoIndex
+  toEnum (#const TREXIO_INVALID_ARG_9) = InvalidArg9
+  toEnum (#const TREXIO_INVALID_ARG_10) = InvalidArg10
+  toEnum (#const TREXIO_INVALID_ARG_11) = InvalidArg11
+  toEnum (#const TREXIO_INVALID_ARG_12) = InvalidArg12
+  toEnum (#const TREXIO_INVALID_ARG_13) = InvalidArg13
+  toEnum (#const TREXIO_INVALID_ARG_14) = InvalidArg14
+  toEnum (#const TREXIO_CORRUPTION_ATTEMPT) = CorruptionAttempt
+  #endif
+  #endif
   toEnum _ = error "toEnum(ExitCode): invalid argument"
+  
 
 instance Exception ExitCode where
   displayException = stringOfError 
