@@ -7,7 +7,7 @@ name:               trexio-hs
 -- PVP summary:     +-+------- breaking API changes
 --                  | | +----- non-breaking API additions
 --                  | | | +--- code changes with no API change
-version:            0.1.1
+version:            0.2.0
 synopsis: Bindings to the TREXIO library for wave function data
 homepage:           https://github.com/TREX-CoE/trexio-hs
 license:            BSD-3-Clause
@@ -19,6 +19,11 @@ extra-doc-files:    CHANGELOG.md
 tested-with:        GHC == {9.6, 9.8, 9.10, 9.12}
 description:
     This package provides low- and high-level Haskell bindings for [TREXIO, a portable file format for storing wave function data](https://trex-coe.github.io/trexio/).
+    Tested with TREXIO versions:
+
+      * 2.5.0
+      * 2.6.0
+
     The vast majority of the bindings in this package is generated via TemplateHaskell from the TREXIO JSON specification, that then defines the C-API.
     For more details see the [TREXIO documentation](https://trex-coe.github.io/trexio/lib.html).
     Consequently, this package is able to adapt to changes in the TREXIO specification, but the Hackage version reflects the canonical upstream TREXIO specification.
