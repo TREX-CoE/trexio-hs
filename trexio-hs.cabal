@@ -70,6 +70,10 @@ description:
             print rdm2e
     @
 
+source-repository head
+    type: git
+    location: https://github.com/TREX-CoE/trexio-hs.git
+
 common warnings
     ghc-options: -Wall
 
@@ -153,4 +157,3 @@ test-suite trexio-test
         tasty-hunit >= 0.10 && < 0.11,
         tasty-hedgehog >= 1.4 && < 1.5,
         hedgehog >= 1.4 && < 1.6
-
