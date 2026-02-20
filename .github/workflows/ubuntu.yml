@@ -36,9 +36,9 @@ jobs:
       - name: Build trexio-hs
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-          cabal build --extra-lib-dirs=/usr/local/lib
+          cabal build --enable-tests --extra-lib-dirs=/usr/local/lib
       
       - name: Test trexio-hs
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-          cabal test --extra-lib-dirs=/usr/local/lib
+          cabal test --enable-tests --extra-lib-dirs=/usr/local/lib
