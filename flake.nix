@@ -10,7 +10,7 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs";
 
-    trexio.url = "github:TREX-CoE/trexio";
+    trexio.url = "github:TREX-CoE/trexio/v2.6.1";
   };
 
   outputs =

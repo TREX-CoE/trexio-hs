@@ -38,11 +38,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1754297008,
-        "narHash": "sha256-kGlYI6sSVWjLdpFIFqwbA2uECHCN47HTFsDE1ox8gdk=",
+        "lastModified": 1771525516,
+        "narHash": "sha256-t9QYIuU+21iNFG+AO3T9u9FclWaKPlnynGZmdiSsQ9c=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "dd9606828cbe6f779357e11d59c7392a75b6a471",
+        "rev": "d6bd58dc0cb04acb625f2221215882dd1e0f9cfd",
         "type": "github"
       },
       "original": {
@@ -109,15 +109,16 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1754145328,
-        "narHash": "sha256-DWpbzemrdJ1mC5ZuNEDhaoH/RVZWTH4001hggAcVjcM=",
+        "lastModified": 1770232085,
+        "narHash": "sha256-iESt7dXta/Enpgb418js26y5+YvROsqgxvNhgAgXd/I=",
         "owner": "TREX-CoE",
         "repo": "trexio",
-        "rev": "68f35b024032fe154ebec8d70f3b8cb4a35a4428",
+        "rev": "001c06bb44b6667b26167e3e6bc792a6a30d5abe",
         "type": "github"
       },
       "original": {
         "owner": "TREX-CoE",
+        "ref": "v2.6.1",
         "repo": "trexio",
         "type": "github"
       }

@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         ghc: [ "9.6", "9.8", "9.10", "9.12" ]
-        trexio: [ "2.5.0", "2.6.0" ]
+        trexio: [ "2.5.0", "2.6.0", "2.6.1" ]
     name: GHC ${{ matrix.ghc }}, Trexio ${{ matrix.trexio }}
     steps:
       - name: Checkout
@@ -36,9 +36,9 @@ jobs:
       - name: Build trexio-hs
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-          cabal build --extra-lib-dirs=/usr/local/lib
+          cabal build --enable-tests --extra-lib-dirs=/usr/local/lib
       
       - name: Test trexio-hs
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-          cabal test --extra-lib-dirs=/usr/local/lib
+          cabal test --enable-tests --extra-lib-dirs=/usr/local/lib
