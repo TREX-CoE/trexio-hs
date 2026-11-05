@@ -54,32 +54,31 @@ coord <- Massiv.fromListsM Par
 withTrexio "water.trexio" FileWrite Hdf5 $ \\trexio ->
     writeNucleusCoord trexio coord
 @
-
 -}
 module TREXIO (
-    -- * Basic Operations
-    ExitCode (..),
-    ExitCodeC,
-    version,
-    Backend (..),
-    Trexio,
-    FileMode (..),
-    hasBackend,
-    open,
-    close,
-    markSafety,
-    TrexioScheme (..),
-    GroupName,
-    Group (..),
-    Typ (..),
-    Length (..),
-    DimLength (..),
-    DataName,
+  -- * Basic Operations
+  ExitCode (..),
+  ExitCodeC,
+  version,
+  Backend (..),
+  Trexio,
+  FileMode (..),
+  hasBackend,
+  open,
+  close,
+  markSafety,
+  TrexioScheme (..),
+  GroupName,
+  Group (..),
+  Typ (..),
+  Length (..),
+  DimLength (..),
+  DataName,
 
-    -- * High Level Interface
-    scheme,
-    withTrexio,
-    module TREXIO.HighLevel,
+  -- * High Level Interface
+  scheme,
+  withTrexio,
+  module TREXIO.HighLevel,
 ) where
 
 import Control.Exception.Safe
@@ -89,13 +88,13 @@ import Language.Haskell.TH
 import Language.Haskell.TH.Syntax (lift)
 import TREXIO.HighLevel
 import TREXIO.Internal.Base
-import TREXIO.Internal.TH (DataName, Group (..), GroupName, TrexioScheme (..), Typ (..), Length (..), DimLength (..))
+import TREXIO.Internal.TH (DataName, DimLength (..), Group (..), GroupName, Length (..), TrexioScheme (..), Typ (..))
 import TREXIO.LowLevel.Scheme (scheme)
 
 -- | Work safely with a TREXIO file handle. Prefer over 'open' and 'close'.
 withTrexio :: (MonadMask m, MonadIO m) => FilePath -> FileMode -> Backend -> (Trexio -> m a) -> m a
 withTrexio path mode backend f =
-    bracket
-        (liftIO $ open path mode backend)
-        (\trexio -> liftIO . close $ trexio)
-        f
+  bracket
+    (liftIO $ open path mode backend)
+    (\trexio -> liftIO . close $ trexio)
+    f

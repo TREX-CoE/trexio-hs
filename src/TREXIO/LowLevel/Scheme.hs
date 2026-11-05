@@ -13,13 +13,15 @@ Portability: POSIX
 module TREXIO.LowLevel.Scheme where
 
 import Language.Haskell.TH
-import TREXIO.Internal.TH
 import Language.Haskell.TH.Syntax (lift)
+import TREXIO.Internal.TH
 
--- | The JSON specification of the code generator, that constructs the C-API and
--- that this package binds to.
+{- | The JSON specification of the code generator, that constructs the C-API and
+that this package binds to.
+-}
 scheme :: TrexioScheme
-scheme = $(do
-    trexio <- runIO getJsonSpec
-    lift trexio
-  )
+scheme =
+  $( do
+       trexio <- runIO getJsonSpec
+       lift trexio
+   )

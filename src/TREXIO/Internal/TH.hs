@@ -135,13 +135,15 @@ instance FromJSON DataName where
 etc.
 -}
 data Typ
-  = -- | A 32 integer but meant to represent the size in a given dimension. The
-    -- Bool indicates if field can also be written
+  = {- | A 32 integer but meant to represent the size in a given dimension. The
+      Bool indicates if field can also be written
+    -}
     Dim Bool Length
   | -- | A 32 bit integer
     Int Length
-  | -- | A double precision float. The Bool indicates whether this field is
-    -- buffered
+  | {- | A double precision float. The Bool indicates whether this field is
+      buffered
+    -}
     Float Bool Length
   | -- | A string with a given length
     Str Length

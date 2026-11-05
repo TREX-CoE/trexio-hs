@@ -18,14 +18,14 @@ import TREXIO.Internal.TH
 import TREXIO.LowLevel.Scheme
 
 $( do
-    let trexio@(TrexioScheme trexioScheme) = scheme
-        groups = Map.toList trexioScheme
+     let trexio@(TrexioScheme trexioScheme) = scheme
+         groups = Map.toList trexioScheme
 
-    -- Generate records for all data groups
-    dataGroupRecords <- traverse (uncurry mkRecord) groups
+     -- Generate records for all data groups
+     dataGroupRecords <- traverse (uncurry mkRecord) groups
 
-    -- Generate the TREXIO super record with fields for all data groups
-    trexioSuperRecord <- mkTrexioScheme trexio
+     -- Generate the TREXIO super record with fields for all data groups
+     trexioSuperRecord <- mkTrexioScheme trexio
 
-    return $ trexioSuperRecord : dataGroupRecords
+     return $ trexioSuperRecord : dataGroupRecords
  )
