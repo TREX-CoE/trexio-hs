@@ -16,7 +16,7 @@ maintainer:         phillip.seeber@uni-jena.de
 category:           Data
 build-type:         Simple
 extra-doc-files:    CHANGELOG.md
-tested-with:        GHC == {9.6, 9.8, 9.10, 9.12}
+tested-with:        GHC == {9.6, 9.8, 9.10, 9.12, 9.14}
 description:
     This package provides low- and high-level Haskell bindings for [TREXIO, a portable file format for storing wave function data](https://trex-coe.github.io/trexio/).
     Tested with TREXIO versions:
@@ -80,8 +80,8 @@ common warnings
 
 common deps
     build-depends:
-        aeson >= 2.1 && < 2.3,
-        base >= 4.18 && < 4.22,
+        aeson >= 2.1 && < 2.4,
+        base >= 4.18 && < 4.23,
         bitvec >= 1.1.5.0 && < 1.2,
         bytestring >= 0.10 && < 0.13,
         casing >= 0.1.4 && < 0.2,

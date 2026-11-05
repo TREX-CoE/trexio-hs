@@ -28,7 +28,10 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ trexioOvl trexio.overlays.default ];
+          overlays = [
+            trexioOvl
+            trexio.overlays.default
+          ];
         };
       in
       {
@@ -55,6 +58,17 @@
           ghc98 = pkgs.haskell.packages.ghc98.trexio-hs;
           ghc910 = pkgs.haskell.packages.ghc910.trexio-hs;
           ghc912 = pkgs.haskell.packages.ghc912.trexio-hs;
+          ghc914 = pkgs.haskell.packages.ghc914.trexio-hs;
+          fourmolu =
+            pkgs.runCommand "fourmolu-check"
+              {
+                nativeBuildInputs = [ pkgs.haskellPackages.fourmolu ];
+              }
+              ''
+                cp -r ${./.}/* .
+                fourmolu --haddock-style multi-line --haddock-style-module multi-line --mode check $(find src src-int test -name "*.hs")
+                mkdir $out
+              '';
         };
       }
     )
