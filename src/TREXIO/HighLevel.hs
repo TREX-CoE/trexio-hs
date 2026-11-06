@@ -28,18 +28,18 @@ import TREXIO.LowLevel
 import TREXIO.LowLevel.Scheme
 
 $( do
-    let trexio@(TrexioScheme trexioScheme) = scheme
-        groups = Map.toList trexioScheme
+     let trexio@(TrexioScheme trexioScheme) = scheme
+         groups = Map.toList trexioScheme
 
-    -- Generate abstracted Haskell wrappers around all C functions
-    fmap concat . forM groups $ \(groupName, Group group) -> do
-        deleteBind <- mkHsDeleteFn groupName
-        fieldBinds <- fmap concat . forM (Map.toList group) $ \(dataName, fieldType) -> do
-            hasBind <- mkHsHasFn groupName dataName fieldType
-            readBind <- mkHsReadFn groupName dataName fieldType
-            writeBind <- mkHsWriteFn trexio groupName dataName fieldType
-            return $ hasBind <> readBind <> writeBind
-        return $ deleteBind <> fieldBinds
+     -- Generate abstracted Haskell wrappers around all C functions
+     fmap concat . forM groups $ \(groupName, Group group) -> do
+       deleteBind <- mkHsDeleteFn groupName
+       fieldBinds <- fmap concat . forM (Map.toList group) $ \(dataName, fieldType) -> do
+         hasBind <- mkHsHasFn groupName dataName fieldType
+         readBind <- mkHsReadFn groupName dataName fieldType
+         writeBind <- mkHsWriteFn trexio groupName dataName fieldType
+         return $ hasBind <> readBind <> writeBind
+       return $ deleteBind <> fieldBinds
  )
 
 {- | Get the number of 'Int64's required to store a single determinant. This is a
@@ -48,5 +48,5 @@ the number of MOs.
 -}
 intsPerDet :: (MonadIO m, MonadThrow m) => Trexio -> m Int
 intsPerDet trexio = liftIO . alloca $ \nPtr -> do
-    checkEC $ trexio_get_int64_num trexio nPtr
-    fromIntegral <$> peek nPtr
+  checkEC $ trexio_get_int64_num trexio nPtr
+  fromIntegral <$> peek nPtr

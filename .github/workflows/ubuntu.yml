@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ghc: [ "9.6", "9.8", "9.10", "9.12" ]
+        ghc: [ "9.6", "9.8", "9.10", "9.12", "9.14" ]
         trexio: [ "2.5.0", "2.6.0", "2.6.1" ]
     name: GHC ${{ matrix.ghc }}, Trexio ${{ matrix.trexio }}
     steps:
@@ -42,3 +42,22 @@ jobs:
         run: |
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
           cabal test --enable-tests --extra-lib-dirs=/usr/local/lib
+
+  fourmolu:
+    runs-on: ubuntu-latest
+    name: Fourmolu formatting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup GHC
+        uses: haskell-actions/setup@v2
+        with:
+          ghc-version: "9.12"
+          cabal-version: latest
+
+      - name: Install fourmolu
+        run: cabal update && cabal install fourmolu
+
+      - name: Check formatting
+        run: fourmolu --mode check $(find src src-int test -name "*.hs")

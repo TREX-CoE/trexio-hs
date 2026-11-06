@@ -26,29 +26,29 @@ import TREXIO.Internal.TH
 import TREXIO.LowLevel.Scheme
 
 $( do
-    let TrexioScheme trexioScheme = scheme
-        groups = Map.toList trexioScheme
+     let TrexioScheme trexioScheme = scheme
+         groups = Map.toList trexioScheme
 
-    -- Import all C functions for all fields and operations
-    concat <$> traverse (uncurry mkCBindings) groups
+     -- Import all C functions for all fields and operations
+     concat <$> traverse (uncurry mkCBindings) groups
  )
 
 -- | 'Int64's required per determinant
 foreign import capi "trexio.h trexio_get_int64_num"
-    trexio_get_int64_num ::
-        Trexio ->
-        Ptr CInt ->
-        IO ExitCodeC
+  trexio_get_int64_num ::
+    Trexio ->
+    Ptr CInt ->
+    IO ExitCodeC
 
 -- | Take a list of occupied orbital indices and create a bitfield from it
 foreign import capi "trexio.h trexio_to_bitfield_list"
-    trexio_to_bitfield_list ::
-        -- | @orb_list@
-        ConstPtr Int32 ->
-        -- | @occupied_num@
-        Int32 ->
-        -- | Preallocated, zeroed bit array representing a determinant
-        ConstPtr Int64 ->
-        -- | Number of Int64 required per determinant as obtained by 'trexio_get_int64_num'
-        Int32 ->
-        IO ExitCodeC
+  trexio_to_bitfield_list ::
+    -- | @orb_list@
+    ConstPtr Int32 ->
+    -- | @occupied_num@
+    Int32 ->
+    -- | Preallocated, zeroed bit array representing a determinant
+    ConstPtr Int64 ->
+    -- | Number of Int64 required per determinant as obtained by 'trexio_get_int64_num'
+    Int32 ->
+    IO ExitCodeC
